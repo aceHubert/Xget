@@ -1,4 +1,4 @@
-name: Deploy to Cloudflare Pages
+name: Deploy to Netlify
 
 on:
   workflow_run:
@@ -23,14 +23,19 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
 
     steps:
-      - name: Checkout pages branch
+      - name: Checkout functions branch
         uses: actions/checkout@v6
         with:
-          ref: pages
+          ref: functions
 
-      - name: Deploy to Cloudflare Pages
-        uses: cloudflare/wrangler-action@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
         with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy . --project-name=xget --branch=${{ github.ref_name }}
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install Netlify CLI
+        run: npm install --global netlify-cli@latest
+
+      - name: Deploy to Netlify
+        run: netlify deploy --prod --dir=. --auth=${{ secrets.NETLIFY_AUTH_TOKEN }} --site=${{ secrets.NETLIFY_SITE_ID }}
